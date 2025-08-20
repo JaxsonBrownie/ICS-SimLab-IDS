@@ -24,8 +24,8 @@ from datetime import timezone
 
 # constants
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
-PCAP_FILE = FILEPATH + "/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
-TIMESTAMP_FILE = FILEPATH + "/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
+PCAP_FILE = FILEPATH + "../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
+TIMESTAMP_FILE = FILEPATH + "../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
 
 #########################################################################################
 # Objective 1: Reconnaissance

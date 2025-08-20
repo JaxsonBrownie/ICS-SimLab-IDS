@@ -1,0 +1,15 @@
+Flask==3.1.0
+jsonschema==4.23.0
+matplotlib==3.10.1
+numpy==1.26.1
+pandas==2.2.3
+pymodbus==2.5.3
+pyparsing==3.2.3
+pyserial==3.5
+python-nmap==0.7.1
+PyYAML==6.0.2
+pyshark==0.6
+requests==2.32.3
+scapy==2.5.0
+scipy==1.11.3
+streamlit==1.44.1
