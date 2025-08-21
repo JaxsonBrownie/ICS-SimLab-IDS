@@ -24,8 +24,9 @@ from datetime import timezone
 
 # constants
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
-PCAP_FILE = FILEPATH + "../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
-TIMESTAMP_FILE = FILEPATH + "../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
+PCAP_FILE = FILEPATH + "/../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
+TIMESTAMP_FILE = FILEPATH + "/../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
+DOCKER_PATH = None
 
 #########################################################################################
 # Objective 1: Reconnaissance
@@ -90,7 +91,8 @@ def disable_devices():
     write_timestamp('attack5 : end')
 
     # reset damaged devices
-    time.sleep(30)
+    #time.sleep(30)
+    time.sleep(2)
     write_timestamp('reset : start')
     reset_devices(ip_addresses)
     write_timestamp('reset : end')
@@ -165,7 +167,7 @@ def reset_devices(ip_addresses):
     # reset the containers
     services = ' '.join(containers)
     reset_container_process = subprocess.run(
-        f"docker compose restart {services}",
+        f"docker compose -f {DOCKER_PATH} restart {services}",
         check=True,
         capture_output=True,
         text=True,
@@ -237,11 +239,12 @@ def start_attacking():
             selections.remove(selection)
 
             print("Waiting a random amount of time (2 to 4 minutes) before next attack...")
-            #wait_time = random.randint(2 * 1, 5 * 1)
-            wait_time = random.randint(2 * 60, 5 * 60)
+            wait_time = random.randint(2 * 1, 5 * 1)
+            #wait_time = random.randint(2 * 60, 5 * 60)
             time.sleep(wait_time)
 
             # perform attack
+            selection = 3
             if selection == 1:
                 start_attack(recon, 1)
             elif selection == 2:
@@ -286,14 +289,16 @@ if __name__ == "__main__":
              """)
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--interface", required=True)
+    parser.add_argument("-d", "--dockerpath", required=True)
 
     args = parser.parse_args()
     interface = args.interface
+    DOCKER_PATH = args.dockerpath
 
     # setup directories
     #os.makedirs(FILEPATH + "/dataset", exist_ok=True)
-    os.makedirs(FILEPATH + "/pcap", exist_ok=True)
-    os.makedirs(FILEPATH + "/timestamp", exist_ok=True)
+    os.makedirs(FILEPATH + "/../data/pcap", exist_ok=True)
+    os.makedirs(FILEPATH + "/../data/timestamp", exist_ok=True)
 
     # start thread for running attacks
     attacker_thread = threading.Thread(target=start_attacking, args=(), daemon=True)
