@@ -91,8 +91,7 @@ def disable_devices():
     write_timestamp('attack5 : end')
 
     # reset damaged devices
-    #time.sleep(30)
-    time.sleep(2)
+    time.sleep(30)
     write_timestamp('reset : start')
     reset_devices(ip_addresses)
     write_timestamp('reset : end')
@@ -239,8 +238,8 @@ def start_attacking():
             selections.remove(selection)
 
             print("Waiting a random amount of time (2 to 4 minutes) before next attack...")
-            wait_time = random.randint(2 * 1, 5 * 1)
-            #wait_time = random.randint(2 * 60, 5 * 60)
+            #wait_time = random.randint(2 * 1, 5 * 1)
+            wait_time = random.randint(2 * 60, 4 * 60)
             time.sleep(wait_time)
 
             # perform attack
@@ -254,7 +253,7 @@ def start_attacking():
             elif selection == 4:
                 start_attack(disable_devices_through_restarting, 4)
             elif selection == 5:
-                start_attack(find_exploits, 6)
+                start_attack(find_exploits, 5)
                 #start_attack(dos, 5)
             #elif selection == 6:
                 #start_attack(find_exploits, 6)
