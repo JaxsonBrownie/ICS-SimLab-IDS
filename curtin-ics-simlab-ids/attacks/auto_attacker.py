@@ -243,7 +243,6 @@ def start_attacking():
             time.sleep(wait_time)
 
             # perform attack
-            selection = 3
             if selection == 1:
                 start_attack(recon, 1)
             elif selection == 2:
