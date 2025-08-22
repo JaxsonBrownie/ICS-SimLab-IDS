@@ -243,7 +243,6 @@ def create_csv(packets, timestamp_file, output_file):
                 tmp_val = getattr(modbus_layer, "byte_cnt", "")
                 modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
 
-
                 # get single outputs
                 tmp_val = getattr(modbus_layer, "data", "").replace(":", "")
                 modbus_data += tmp_val # (already hex in this form)
@@ -259,6 +258,10 @@ def create_csv(packets, timestamp_file, output_file):
                             if data.startswith("regval"):
                                 modbus_value = getattr(register_fields, data)                        
                         modbus_data += f'{int(modbus_value):04x}'
+                
+                if modbus_func_code == "43":
+                    print(modbus_data)
+
 
             # attack specific information
             if flag_packet(pkt):
