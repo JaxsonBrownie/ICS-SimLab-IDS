@@ -24,8 +24,9 @@ from datetime import timezone
 
 # constants
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
-PCAP_FILE = FILEPATH + "../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
-TIMESTAMP_FILE = FILEPATH + "../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
+PCAP_FILE = FILEPATH + "/../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-output.pcap')
+TIMESTAMP_FILE = FILEPATH + "/../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
+DOCKER_PATH = None
 
 #########################################################################################
 # Objective 1: Reconnaissance
@@ -146,87 +147,6 @@ def find_exploits():
     attacker.device_identification_attack(ip_addresses)
     write_timestamp('attack2 : end')
 
-
-#########################################################################################
-# Objective 7: Cause power outage for a house 
-# TODO: NOT USED
-def power_outage():
-    # get information to find control set points to change
-    write_timestamp('attack0 : start')
-    attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
-    time.sleep(5)
-    write_timestamp('attack1 : start')
-    attacker.function_code_scan(["192.168.0.21", "192.168.0.22"])
-    write_timestamp('attack1 : end')
-    time.sleep(5)
-    write_timestamp('attack3 : start')
-    attacker.naive_sensor_read(["192.168.0.21", "192.168.0.22"])
-    write_timestamp('attack3 : end')
-    time.sleep(5)
-    # pick a device
-    device_dict = {"plc1": "192.168.0.21", "plc2": "192.168.0.22"}
-    victim = random.choice(list(device_dict.items()))
-    # change the transfer switch threshold to 0
-    print(victim[1])
-    write_timestamp('attack8 : start')
-    attacker.altered_control_set_points([victim[1]], 0)
-    write_timestamp('attack8 : end')
-    # ICS will now switch to solar power even when there is none
-    time.sleep(30)
-
-    # reset damaged device
-    write_timestamp('reset : start')
-    subprocess.run(
-        ['docker-compose', '-f', '../simulation/docker-compose.yml', 'restart', victim[0]],
-        check=True,
-        capture_output=True,
-        text=True
-    )
-    write_timestamp('reset : end')
-
-
-#########################################################################################
-# Objective 8: Burn out transfer switch 
-# TODO: NOT USED
-def destroy_switch():
-    # get information to find values controlling transfer switch
-    write_timestamp('attack0 : start')
-    attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
-    time.sleep(5)
-    write_timestamp('attack1 : start')
-    attacker.function_code_scan(["192.168.0.21", "192.168.0.22"])
-    write_timestamp('attack1 : end')
-    time.sleep(5)
-    write_timestamp('attack3 : start')
-    attacker.naive_sensor_read(["192.168.0.21", "192.168.0.22"])
-    write_timestamp('attack3 : end')
-    time.sleep(5)
-    # pick a device
-    device_dict = {"plc1": "192.168.0.21", "plc2": "192.168.0.22"}
-    victim = random.choice(list(device_dict.items()))
-    # repeatedly switch over the transfer switch to simulate burning it out
-
-    write_timestamp('attack7 : start')
-    for _ in range(3000):
-        attacker.altered_actuator_state([victim[1]], 1)
-        attacker.altered_actuator_state([victim[1]], 2)
-        time.sleep(0.01)
-    write_timestamp('attack7 : end')
-
-
-#########################################################################################
-# Objective 9: Replay captured data to mask broken sensors
-# TODO:
-
-
-#########################################################################################
-# Objective 10: Simulate greater-than-normal solar power generation
-# TODO:
-
-
-
 # FUNCTION: reset_devices
 # PURPOSE:  Resets devices given their ip addresses
 def reset_devices(ip_addresses):
@@ -246,7 +166,7 @@ def reset_devices(ip_addresses):
     # reset the containers
     services = ' '.join(containers)
     reset_container_process = subprocess.run(
-        f"docker compose restart {services}",
+        f"docker compose -f {DOCKER_PATH} restart {services}",
         check=True,
         capture_output=True,
         text=True,
@@ -309,16 +229,17 @@ def start_capturing(interface,):
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
     while True:
-        selections = list(range(1, 7))
+        selections = list(range(1, 6))
 
         while selections:
             # perform a random attack, ensuring each attack is performed once
+            # extra: only perform dos attack once total to avoid data overfitting
             selection = random.choice(selections)
             selections.remove(selection)
 
-            print("Waiting a random amount of time (3 to 5 minutes) before next attack...")
-            #wait_time = random.randint(3 * 1, 5 * 1)
-            wait_time = random.randint(3 * 60, 5 * 60)
+            print("Waiting a random amount of time (2 to 4 minutes) before next attack...")
+            #wait_time = random.randint(2 * 1, 5 * 1)
+            wait_time = random.randint(2 * 60, 4 * 60)
             time.sleep(wait_time)
 
             # perform attack
@@ -331,9 +252,11 @@ def start_attacking():
             elif selection == 4:
                 start_attack(disable_devices_through_restarting, 4)
             elif selection == 5:
-                start_attack(dos, 5)
-            elif selection == 6:
-                start_attack(find_exploits, 6)
+                start_attack(find_exploits, 5)
+                #start_attack(dos, 5)
+            #elif selection == 6:
+                #start_attack(find_exploits, 6)
+
 
 
 if __name__ == "__main__":
@@ -364,14 +287,16 @@ if __name__ == "__main__":
              """)
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--interface", required=True)
+    parser.add_argument("-d", "--dockerpath", required=True)
 
     args = parser.parse_args()
     interface = args.interface
+    DOCKER_PATH = args.dockerpath
 
     # setup directories
     #os.makedirs(FILEPATH + "/dataset", exist_ok=True)
-    os.makedirs(FILEPATH + "/pcap", exist_ok=True)
-    os.makedirs(FILEPATH + "/timestamp", exist_ok=True)
+    os.makedirs(FILEPATH + "/../data/pcap", exist_ok=True)
+    os.makedirs(FILEPATH + "/../data/timestamp", exist_ok=True)
 
     # start thread for running attacks
     attacker_thread = threading.Thread(target=start_attacking, args=(), daemon=True)

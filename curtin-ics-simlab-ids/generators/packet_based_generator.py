@@ -10,8 +10,6 @@ import csv
 import argparse
 import pyshark
 import sys
-from scapy.all import rdpcap, IP, ARP, Ether, TCP, UDP
-from scapy.contrib.modbus import ModbusADURequest, ModbusADUResponse
 from datetime import datetime, timezone
 
 
@@ -197,6 +195,7 @@ def create_csv(packets, timestamp_file, output_file):
                 ip_src = ip_layer.src
                 ip_dst = ip_layer.dst
                 ip_len = ip_layer.len,
+                ip_len = int(ip_len[0])
                 ip_flags_df = ip_layer.flags_tree.df
                 ip_flags_mf = ip_layer.flags_tree.mf
                 ip_frag_offset = ip_layer.frag_offset
@@ -231,7 +230,7 @@ def create_csv(packets, timestamp_file, output_file):
                 modbus_layer = pkt.modbus
 
                 modbus_func_code = modbus_layer.func_code
-    
+
                 # get modbus data
                 modbus_data = ""
 
@@ -263,6 +262,24 @@ def create_csv(packets, timestamp_file, output_file):
                     print(modbus_data)
 
 
+                # get device information output
+                tmp_val = getattr(modbus_layer, "mei", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "read_device_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "object_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "conformity_level", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                tmp_val = getattr(modbus_layer, "more_follows", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                tmp_val = getattr(modbus_layer, "next_object_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "num_objects", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+
+                modbus_data = f'0x{modbus_data}'
+
             # attack specific information
             if flag_packet(pkt):
                 attack_binary = 1
@@ -273,7 +290,7 @@ def create_csv(packets, timestamp_file, output_file):
             # write to csv
             csv_writer.writerow([protocol,
                                  ether_src_mac, ether_dst_mac,
-                                 ip_src, ip_dst, ip_len[0], ip_flags_df, ip_flags_mf, ip_frag_offset, ip_id, ip_ttl, ip_proto, ip_checksum,
+                                 ip_src, ip_dst, ip_len, ip_flags_df, ip_flags_mf, ip_frag_offset, ip_id, ip_ttl, ip_proto, ip_checksum,
                                  tcp_window_size, tcp_ack, tcp_seq, tcp_len, tcp_stream, tcp_urgent_pointer, tcp_flags, 
                                  tcp_analysis_ack_rtt, tcp_analysis_push_bytes_sent, tcp_analysis_bytes_in_flight,
                                  frame_time_relative, frame_time_delta,
