@@ -237,9 +237,11 @@ def start_attacking():
             selection = random.choice(selections)
             selections.remove(selection)
 
-            print("Waiting a random amount of time (2 to 4 minutes) before next attack...")
+            min_time = 1
+            max_time = 2
+            print(f"Waiting a random amount of time ({min_time} to {max_time} minutes) before next attack...")
             #wait_time = random.randint(2 * 1, 5 * 1)
-            wait_time = random.randint(2 * 60, 4 * 60)
+            wait_time = random.randint(min_time * 60, max_time * 60)
             time.sleep(wait_time)
 
             # perform attack
