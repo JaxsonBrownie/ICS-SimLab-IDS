@@ -16,11 +16,6 @@ import threading
 import os
 import argparse
 from datetime import timezone
-#import argparse
-
-# global variables
-#cur_obj = -1
-#lock = threading.Lock()
 
 # constants
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +23,7 @@ PCAP_FILE = FILEPATH + "/../data/pcap/" + datetime.datetime.now(timezone.utc).st
 TIMESTAMP_FILE = FILEPATH + "/../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%M:%S-timestamps.txt')
 DOCKER_PATH = None
 
-#########################################################################################
+
 # Objective 1: Reconnaissance
 def recon():
     # port/address scan
@@ -55,7 +50,7 @@ def recon():
     write_timestamp('attack3 : end')
 
 
-#########################################################################################
+
 # Objective 2: Sporadic Injection
 def sporadic_injections():
     # port/address scan
@@ -64,11 +59,18 @@ def sporadic_injections():
     write_timestamp('attack0 : end')
     time.sleep(5)
 
+    # naively read sensor values to find used coils/registers
+    write_timestamp('attack3 : start')
+    scanned_addresses = attacker.naive_sensor_read(ip_addresses)
+    write_timestamp('attack3 : end')
+
+    print(scanned_addresses)
+
     # inject values sporadically to all found devices
     write_timestamp('attack4 : start')
-    attacker.sporadic_sensor_measurement_injection(ip_addresses)
+    attacker.sporadic_sensor_measurement_injection(ip_addresses, scanned_addresses)
     write_timestamp('attack4 : end')
-
+    
     # reset damaged devices
     time.sleep(1)
     write_timestamp('reset : start')
@@ -76,7 +78,7 @@ def sporadic_injections():
     write_timestamp('reset : end')
 
 
-#########################################################################################
+
 # Objective 3: Disable service through Force Listen Mode
 def disable_devices():
     # scan network
@@ -97,7 +99,7 @@ def disable_devices():
     write_timestamp('reset : end')
 
 
-#########################################################################################
+
 # Objective 4: Disable service through Restart Communication
 def disable_devices_through_restarting():
     # scan network
@@ -112,7 +114,7 @@ def disable_devices_through_restarting():
     write_timestamp('attack6 : end')
 
 
-#########################################################################################
+
 # Objective 5: DOS Servers
 def dos():
     # scan network
@@ -133,7 +135,7 @@ def dos():
     write_timestamp('attack7 : end')
 
 
-#########################################################################################
+
 # Objective 6: Attempt to find device-related exploits
 def find_exploits():
     # address scan to find Modbus devices
@@ -147,8 +149,10 @@ def find_exploits():
     attacker.device_identification_attack(ip_addresses)
     write_timestamp('attack2 : end')
 
+
+
 # FUNCTION: reset_devices
-# PURPOSE:  Resets devices given their ip addresses
+# PURPOSE:  Resets Docker containers given their ip addresses
 def reset_devices(ip_addresses):
     containers = []
     for ip in ip_addresses:
@@ -225,22 +229,25 @@ def start_capturing(interface,):
         capture.close()
 
 
+
 # FUNCTION: start_attacking
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
     while True:
         selections = list(range(1, 6))
 
+        # extra: only perform dos attack once total to avoid data bias
+        time.sleep(45)
+        start_attack(dos, 6)
+        
         while selections:
             # perform a random attack, ensuring each attack is performed once
-            # extra: only perform dos attack once total to avoid data overfitting
             selection = random.choice(selections)
             selections.remove(selection)
 
             min_time = 1
             max_time = 2
             print(f"Waiting a random amount of time ({min_time} to {max_time} minutes) before next attack...")
-            #wait_time = random.randint(2 * 1, 5 * 1)
             wait_time = random.randint(min_time * 60, max_time * 60)
             time.sleep(wait_time)
 
@@ -255,9 +262,6 @@ def start_attacking():
                 start_attack(disable_devices_through_restarting, 4)
             elif selection == 5:
                 start_attack(find_exploits, 5)
-                #start_attack(dos, 5)
-            #elif selection == 6:
-                #start_attack(find_exploits, 6)
 
 
 
@@ -296,7 +300,6 @@ if __name__ == "__main__":
     DOCKER_PATH = args.dockerpath
 
     # setup directories
-    #os.makedirs(FILEPATH + "/dataset", exist_ok=True)
     os.makedirs(FILEPATH + "/../data/pcap", exist_ok=True)
     os.makedirs(FILEPATH + "/../data/timestamp", exist_ok=True)
 

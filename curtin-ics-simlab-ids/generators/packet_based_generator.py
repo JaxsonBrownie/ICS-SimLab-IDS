@@ -41,6 +41,7 @@ def flag_packet(packet):
     return is_attack
 
 
+
 # Function: reconstruct_modbus_data
 # Purpose: Takes the lowest modbus Scapy layer and rebuilds the data field (only)
 #   as a hex string
@@ -79,6 +80,8 @@ def reconstruct_modbus_data(modbus_layer):
                     raise TypeError(f"Unexpected data type: {type(binary_data)}")
 
     return reconstructed_data.hex(), data_fields
+
+
 
 # Function: get_attack_data
 # Purpose: Uses the timestamp file to label each attack packet
@@ -122,6 +125,7 @@ def get_attack_data(packet, timestamp_file):
             return attack_num, cat_num, obj_num
         count += 1    
     return "N/A", "N/A", "N/A"
+
 
 
 # Function: create_csv
@@ -300,6 +304,7 @@ def create_csv(packets, timestamp_file, output_file):
                                  frame_time_relative, frame_time_delta,
                                  modbus_func_code, modbus_data,
                                  attack_specific, attack_category, attack_obj, attack_binary])
+
 
 
 if __name__ == "__main__":

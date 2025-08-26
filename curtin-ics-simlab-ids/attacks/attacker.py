@@ -449,34 +449,7 @@ def connection_flood_attack(ip_addresses):
 # Main function
 if __name__ == "__main__":
     print(LOGO)
-
-    menuPrompt = """
------------------------------------------------------------------
-| Please select an attack to run against the ICS simulation:    |
-|                                                               |
-|    Reconnaissance Attacks                                     |
-|    (0) - address scan                                         |
-|    (1) - function code scan                                   |
-|    (2) - device identification attack                         |
-|                                                               |
-|    Response and Measurement Injection Attacks                 |
-|    (3) - naive sensor read                                    |
-|    (4) - sporadic sensor measurement injection                |
-|    (5) - calculated sensor measure injection                  |
-|    (6) - replayed measurement injection                       |
-|                                                               |
-|    Command Injection Attacks                                  |
-|    (7) - altered actuator state                               |
-|    (8) - altered control set points                           |
-|    (9) - force listen mode                                    |
-|    (10) - restart communication                               |
-|                                                               |
-|    Denial of Service Attacks                                  |
-|    (11) - data flood attack                                   |
-|    (12) - connection flood attack                             |
------------------------------------------------------------------
-
-"""
+    
     menuPrompt = """
 -----------------------------------------------------------------
 | Please select an attack to run against the ICS simulation:    |
