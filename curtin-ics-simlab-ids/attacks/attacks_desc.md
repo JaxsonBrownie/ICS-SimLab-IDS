@@ -1,7 +1,15 @@
 # Specific Attacks
 These are all the ICS attacks implemented in `attacker.py`. We given them a number to categories them in the datasets.
 
-0.
+1. address scan
+2. function code scan
+3. device identification attack
+4. naive sensor read
+5. sporadic sensor measurement injection
+6. force listen mode
+7. restart communication
+8. data flood attack
+9. connection flood attack
 
 ---
 # Objective-Based Attacks
