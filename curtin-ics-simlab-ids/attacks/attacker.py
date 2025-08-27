@@ -5,14 +5,14 @@
 #           that no ICS-specific attacks are generated here. You must implement custom cyber attacks
 #           yourself if desired.
 
-import struct
 import nmap
 import random
-import numpy as np
 import time
 from threading import Thread, Event
 from pymodbus.client import ModbusTcpClient
-from pymodbus.pdu import ModbusPDU, ExceptionResponse
+from pymodbus.pdu.pdu import ExceptionResponse, ModbusPDU
+from pymodbus.client.mixin import ModbusClientMixin
+from pymodbus.client.base import ModbusBaseClient
 from pymodbus.pdu.mei_message import ReadDeviceInformationRequest
 from pymodbus.pdu.diag_message import ForceListenOnlyModeRequest, RestartCommunicationsOptionRequest
 
@@ -37,15 +37,16 @@ LOGO = r"""
 # PURPOSE:  A subclass of the ModbusRequest class. Used to construct
 #           custom modbus requests.
 class CustomModbusRequest(ModbusPDU):
-    def __init__(self, payload=b'', **kwargs):
-        super().__init__(self, **kwargs)
-        self.payload = payload
+    def __init__(self, custom_data, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.custom_data = custom_data
 
     def encode(self):
-        return self.payload
-    
+        # send the raw bytes
+        return self.custom_data
+
     def decode(self, data):
-        self.payload = data
+        self.custom_data = data  # parse incoming data
 
 
 
@@ -130,17 +131,16 @@ def function_code_scan(ip_addresses):
                 request = CustomFunctionCode(custom_data=b'\x00\x00\x00\x00')
                 
                 try:
-                    response = client.execute(request)
+                    response = client.execute(request=request, no_response_expected=False)
                     if isinstance(response, ExceptionResponse):
-                        # check if an illegal function exception (0x01) has occurred
-                        if response.exception_code != 1:
-                            print(f"Function code {fc} accepted with exception {response.exception_code}")
-                    #elif response is None:
-                    #    print(f"Function Code {fc}: No response / timeout")
+                        print(f"Function code {fc} accepted with exception {response.exception_code}")
+                    elif response is None:
+                        print(f"Function Code {fc}: No response / timeout")
                     else:
                         print(f"Function Code {fc} accepted")
                 except Exception as e:
-                    print(f"Function Code {fc} accepted with an error")
+                    #print(e)
+                    print(f"Function Code {fc} had an error (rejected)")
         print()
         client.close()
     print("### FUNCTION CODE SCAN FINISH ###")
