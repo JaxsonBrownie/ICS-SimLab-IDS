@@ -258,8 +258,8 @@ def create_csv(packets, timestamp_file, output_file):
                                 modbus_value = getattr(register_fields, data)                        
                         modbus_data += f'{int(modbus_value):04x}'
                 
-                if modbus_func_code == "43":
-                    print(modbus_data)
+                if modbus_func_code == "8":
+                    print(modbus_layer)
 
 
                 # get device information output
