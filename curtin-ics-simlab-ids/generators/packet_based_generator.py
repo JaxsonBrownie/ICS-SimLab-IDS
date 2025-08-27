@@ -8,7 +8,7 @@
 
 import csv
 import argparse
-import pyshark
+import pyshark # type: ignore (dumbass vscode cant figure out its already installed)
 import sys
 from datetime import datetime, timezone
 
@@ -39,6 +39,7 @@ def flag_packet(packet):
             is_attack = True
     
     return is_attack
+
 
 
 # Function: reconstruct_modbus_data
@@ -79,6 +80,8 @@ def reconstruct_modbus_data(modbus_layer):
                     raise TypeError(f"Unexpected data type: {type(binary_data)}")
 
     return reconstructed_data.hex(), data_fields
+
+
 
 # Function: get_attack_data
 # Purpose: Uses the timestamp file to label each attack packet
@@ -122,6 +125,7 @@ def get_attack_data(packet, timestamp_file):
             return attack_num, cat_num, obj_num
         count += 1    
     return "N/A", "N/A", "N/A"
+
 
 
 # Function: create_csv
@@ -246,6 +250,7 @@ def create_csv(packets, timestamp_file, output_file):
                 tmp_val = getattr(modbus_layer, "data", "").replace(":", "")
                 modbus_data += tmp_val # (already hex in this form)
 
+                # TODO: this is spagetti code !!!!!
                 # get multiple outputs
                 for field_name in modbus_layer.field_names:
                     if field_name.startswith("register_"):
@@ -257,26 +262,29 @@ def create_csv(packets, timestamp_file, output_file):
                             if data.startswith("regval"):
                                 modbus_value = getattr(register_fields, data)                        
                         modbus_data += f'{int(modbus_value):04x}'
+
+                    # add all data (don't care about structure anymore)
+                    tmp_val = getattr(modbus_layer, field_name)
+                    try:
+                        modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                    except:
+                        pass
                 
-                if modbus_func_code == "8":
-                    print(modbus_layer)
-
-
                 # get device information output
-                tmp_val = getattr(modbus_layer, "mei", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                tmp_val = getattr(modbus_layer, "read_device_id", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                tmp_val = getattr(modbus_layer, "object_id", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                tmp_val = getattr(modbus_layer, "conformity_level", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
-                tmp_val = getattr(modbus_layer, "more_follows", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
-                tmp_val = getattr(modbus_layer, "next_object_id", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                tmp_val = getattr(modbus_layer, "num_objects", "")
-                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                #tmp_val = getattr(modbus_layer, "mei", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                #tmp_val = getattr(modbus_layer, "read_device_id", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                #tmp_val = getattr(modbus_layer, "object_id", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                #tmp_val = getattr(modbus_layer, "conformity_level", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                #tmp_val = getattr(modbus_layer, "more_follows", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                #tmp_val = getattr(modbus_layer, "next_object_id", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                #tmp_val = getattr(modbus_layer, "num_objects", "")
+                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
 
                 modbus_data = f'0x{modbus_data}'
 
@@ -296,6 +304,7 @@ def create_csv(packets, timestamp_file, output_file):
                                  frame_time_relative, frame_time_delta,
                                  modbus_func_code, modbus_data,
                                  attack_specific, attack_category, attack_obj, attack_binary])
+
 
 
 if __name__ == "__main__":
