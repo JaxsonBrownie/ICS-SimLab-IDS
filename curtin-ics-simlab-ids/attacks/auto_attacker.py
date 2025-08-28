@@ -237,12 +237,12 @@ def start_capturing(interface,):
 # FUNCTION: start_attacking
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
+    # extra: only perform dos attack once total to avoid data bias
+    time.sleep(45)
+    start_attack(dos, 6)
+
     while True:
         selections = list(range(1, 6))
-
-        # extra: only perform dos attack once total to avoid data bias
-        time.sleep(45)
-        start_attack(dos, 6)
 
         while selections:
             # perform a random attack, ensuring each attack is performed once
