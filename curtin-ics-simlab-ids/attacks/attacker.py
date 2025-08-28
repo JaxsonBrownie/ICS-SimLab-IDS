@@ -400,6 +400,7 @@ def data_flood_attack(ip_addresses):
                 client.read_holding_registers(address=address, count=num_values)
             elif func_code == 4:
                 client.read_input_registers(address=address, count=num_values)
+        client.close()
 
     ip = random.choice(ip_addresses)
     print(f"Flooding {ip} with random packets from 10 threads for 7 seconds")
