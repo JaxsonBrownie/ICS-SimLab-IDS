@@ -15,6 +15,7 @@ import pyshark
 import threading
 import os
 import argparse
+import sys
 from datetime import timezone
 
 # constants
@@ -190,7 +191,8 @@ def reset_devices(ip_addresses):
 # PURPOSE:  Creates a timestamp into a timestamp file
 def write_timestamp(text):
     # print to file timestamping when attack starts
-    dt = datetime.datetime.now(timezone.utc)
+    #dt = datetime.datetime.now(timezone.utc)
+    dt = datetime.datetime.now()
     formatted_time = dt.strftime('%H:%M:%S') + f'.{dt.microsecond}'
 
     with open(TIMESTAMP_FILE, 'a') as file:
@@ -238,6 +240,12 @@ def start_capturing(interface,):
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
     # extra: only perform dos attack once total to avoid data bias
+
+    time.sleep(10)
+
+    start_attack(recon, 1)
+    sys.exit()
+
     time.sleep(45)
     start_attack(dos, 6)
 

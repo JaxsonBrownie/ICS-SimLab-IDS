@@ -1,0 +1,10 @@
+objective1 : start : 07:46:04.482207
+attack1 : start : 07:46:04.483007
+attack1 : end : 07:46:07.38223
+attack2 : start : 07:46:12.43379
+attack2 : end : 07:46:12.119191
+attack3 : start : 07:46:17.124656
+attack3 : end : 07:46:17.134422
+attack4 : start : 07:46:22.139536
+attack4 : end : 07:47:12.776474
+objective1 : end : 07:47:12.776665

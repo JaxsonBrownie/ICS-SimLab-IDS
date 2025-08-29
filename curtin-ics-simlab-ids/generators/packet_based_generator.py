@@ -87,44 +87,44 @@ def reconstruct_modbus_data(modbus_layer):
 # Purpose: Uses the timestamp file to label each attack packet
 def get_attack_data(packet, timestamp_file):
     # define attack categories
-    attack_cat = {"0":"0", "1":"0", "2":"0", "3":"1", "4":"1", "5":"N/A", "6":"N/A",
-               "7":"2", "8":"2", "9":"2", "10":"2", "11":"3", "12":"3"}
+    #attack_cat = {"0":"0", "1":"0", "2":"0", "3":"1", "4":"1", "5":"N/A", "6":"N/A",
+    #           "7":"2", "8":"2", "9":"2", "10":"2", "11":"3", "12":"3"}
 
     # get and format packet time
     pkt_time = packet.sniff_time
+    #pkt_time = packet.sniff_time.astimezone(timezone.utc)
 
     file = open(timestamp_file, 'r')
     lines = file.readlines()
 
-    count = 0
+    #count = 0
+    prev_items = []
     for line in lines:
         items = line.split(" : ")
 
         # get latest objective
         if "objective" in items[0]:
             obj = items[0]
+        else:
+            # convert the timestamp in the file to a datetime
+            att_time = datetime.strptime(items[2].strip(), "%H:%M:%S.%f")
 
-        # convert the timestamp in the file to a datetime
-        att_time = datetime.strptime(items[2].strip(), "%H:%M:%S.%f")
+            # find the first items timestamp that is greater than the packets timestamp
+            print("PACKET: ", pkt_time.time())
+            print("ATTACK: ", att_time.time())
+            if att_time.time() > pkt_time.time():
+                # get the attack from the previous line 
+                attack = prev_items[0]
+                
+                # get corresponding attack category
+                attack_num = ''.join(filter(str.isdigit, attack))
 
-        # find the first items timestamp that is greater than the packets timestamp
-        if att_time.time() > pkt_time.time():
-
-            # get the attack 
-            attack = items[0]
-            
-            # get corresponding attack category
-            attack_num = ''.join(filter(str.isdigit, attack))
-            if attack_num.isdigit():
-                cat_num = attack_cat[attack_num]
-            else:
-                cat_num = "NOPE"
-
-            # get objective number
-            obj_num = ''.join(filter(str.isdigit, obj))
-            return attack_num, cat_num, obj_num
-        count += 1    
-    return "N/A", "N/A", "N/A"
+                # get objective number
+                obj_num = ''.join(filter(str.isdigit, obj))
+                return attack_num, obj_num
+        #count += 1
+        prev_items = items
+    return "N/A", "N/A"
 
 
 
@@ -141,7 +141,8 @@ def create_csv(packets, timestamp_file, output_file):
                   "tcp_window_size", "tcp_ack", "tcp_seq", "tcp_len", "tcp_stream", "tcp_urgent_pointer", "tcp_flags", "tcp_analysis_ack_rtt", "tcp_analysis_push_bytes_sent", "tcp_analysis_bytes_in_flight",
                   "frame_time_relative", "frame_time_delta",
                   "modbus_func_code", "modbus_data",
-                  "attack_specific", "attack_category", "attack_obj", "attack_binary",]
+                  "attack_specific", "attack_obj", "attack_binary",
+                  "time"]
         csv_writer.writerow(header)
 
         for pkt in packets:
@@ -179,7 +180,6 @@ def create_csv(packets, timestamp_file, output_file):
             modbus_data = "N/A"
 
             attack_specific = "N/A"
-            attack_category = "N/A"
             attack_obj = "N/A"
             attack_binary = 0
         
@@ -293,7 +293,7 @@ def create_csv(packets, timestamp_file, output_file):
                 attack_binary = 1
 
                 # read the timestamps file and determine which specfic/obj/category attack it is
-                attack_specific, attack_category, attack_obj = get_attack_data(pkt, timestamp_file)
+                attack_specific, attack_obj = get_attack_data(pkt, timestamp_file)
 
             # write to csv
             csv_writer.writerow([protocol,
@@ -303,7 +303,7 @@ def create_csv(packets, timestamp_file, output_file):
                                  tcp_analysis_ack_rtt, tcp_analysis_push_bytes_sent, tcp_analysis_bytes_in_flight,
                                  frame_time_relative, frame_time_delta,
                                  modbus_func_code, modbus_data,
-                                 attack_specific, attack_category, attack_obj, attack_binary])
+                                 attack_specific, attack_obj, attack_binary, pkt.sniff_time.time()])
 
 
 
