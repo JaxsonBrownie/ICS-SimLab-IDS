@@ -110,8 +110,6 @@ def get_attack_data(packet, timestamp_file):
             att_time = datetime.strptime(items[2].strip(), "%H:%M:%S.%f")
 
             # find the first items timestamp that is greater than the packets timestamp
-            print("PACKET: ", pkt_time.time())
-            print("ATTACK: ", att_time.time())
             if att_time.time() > pkt_time.time():
                 # get the attack from the previous line 
                 attack = prev_items[0]
