@@ -20,8 +20,8 @@ from datetime import timezone
 
 # constants
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
-PCAP_FILE = FILEPATH + "/../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%H:%S-output.pcap')
-TIMESTAMP_FILE = FILEPATH + "/../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%H:%S-timestamps.txt')
+PCAP_FILE = FILEPATH + "/../data/pcap/" + datetime.datetime.now(timezone.utc).strftime('%d-%H:%M-output.pcap')
+TIMESTAMP_FILE = FILEPATH + "/../data/timestamp/" + datetime.datetime.now(timezone.utc).strftime('%d-%H:%M-timestamps.txt')
 DOCKER_PATH = None
 
 
@@ -240,12 +240,6 @@ def start_capturing(interface,):
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
     # extra: only perform dos attack once total to avoid data bias
-
-    time.sleep(10)
-
-    start_attack(sporadic_injections, 2)
-    sys.exit()
-
     time.sleep(45)
     start_attack(dos, 6)
 
