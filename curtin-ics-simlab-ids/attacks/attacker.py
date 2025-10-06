@@ -502,14 +502,6 @@ if __name__ == "__main__":
             scanned_addresses = naive_sensor_read(scanned_ips)
         elif selection == 5:
             sporadic_sensor_measurement_injection(scanned_ips, scanned_addresses=scanned_addresses)
-        #elif selection == 5:
-        #    calculated_sensor_measure_injection(scanned_ips)
-        #elif selection == 6:
-        #    replayed_measurement_injection(scanned_ips)
-        #elif selection == 7:
-        #    altered_actuator_state(scanned_ips)
-        #elif selection == 8:
-        #    altered_control_set_points(scanned_ips)
         elif selection == 6:
             force_listen_mode(scanned_ips)
         elif selection == 7:

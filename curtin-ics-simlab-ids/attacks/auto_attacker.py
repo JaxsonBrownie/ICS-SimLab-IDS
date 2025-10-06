@@ -190,8 +190,6 @@ def reset_devices(ip_addresses):
 # FUNCTION: write_timestamp
 # PURPOSE:  Creates a timestamp into a timestamp file
 def write_timestamp(text):
-    # print to file timestamping when attack starts
-    #dt = datetime.datetime.now(timezone.utc)
     dt = datetime.datetime.now()
     formatted_time = dt.strftime('%H:%M:%S') + f'.{dt.microsecond}'
 

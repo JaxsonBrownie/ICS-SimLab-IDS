@@ -12,12 +12,10 @@ from pyflowmeter.sniffer import create_sniffer
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--pcap", required=True)
-    #parser.add_argument("-t", "--timestamps", required=True)
     parser.add_argument("-o", "--output", required=True)
 
     args = parser.parse_args()
     pcap_file = args.pcap
-    #timestamp_file = args.timestamps
     output_file = args.output
 
     print(f"PCAP file: {pcap_file}")

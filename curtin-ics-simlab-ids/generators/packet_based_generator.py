@@ -86,18 +86,12 @@ def reconstruct_modbus_data(modbus_layer):
 # Function: get_attack_data
 # Purpose: Uses the timestamp file to label each attack packet
 def get_attack_data(packet, timestamp_file):
-    # define attack categories
-    #attack_cat = {"0":"0", "1":"0", "2":"0", "3":"1", "4":"1", "5":"N/A", "6":"N/A",
-    #           "7":"2", "8":"2", "9":"2", "10":"2", "11":"3", "12":"3"}
-
     # get and format packet time
     pkt_time = packet.sniff_time
-    #pkt_time = packet.sniff_time.astimezone(timezone.utc)
 
     file = open(timestamp_file, 'r')
     lines = file.readlines()
 
-    #count = 0
     prev_items = []
     for line in lines:
         items = line.split(" : ")
@@ -120,7 +114,6 @@ def get_attack_data(packet, timestamp_file):
                 # get objective number
                 obj_num = ''.join(filter(str.isdigit, obj))
                 return attack_num, obj_num
-        #count += 1
         prev_items = items
     return "N/A", "N/A"
 
