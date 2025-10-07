@@ -239,7 +239,7 @@ def start_capturing(interface,):
 # PURPOSE:  Thread function to start the attack cycles
 def start_attacking():
     # extra: only perform dos attack once total to avoid data bias
-    time.sleep(45)
+    time.sleep(30)
     start_attack(dos, 6)
 
     while True:
@@ -258,19 +258,19 @@ def start_attacking():
 
             # perform attack
             if selection == 1:
-                #start_attack(recon, 1)
+                start_attack(recon, 1)
                 print(1)
             elif selection == 2:
-                #start_attack(sporadic_injections, 2)
+                start_attack(sporadic_injections, 2)
                 print(2)
             elif selection == 3:
-                #start_attack(disable_devices, 3)
+                start_attack(disable_devices, 3)
                 print(3)
             elif selection == 4:
-                #start_attack(disable_devices_through_restarting, 4)
+                start_attack(disable_devices_through_restarting, 4)
                 print(4)
             elif selection == 5:
-                #start_attack(find_exploits, 5)
+                start_attack(find_exploits, 5)
                 print(5)
 
 
