@@ -227,7 +227,9 @@ def start_capturing(interface,):
 
     print(f"Starting capture on {interface} and saving to {os.path.abspath(PCAP_FILE)}")
     try:
-        capture.sniff()
+        # iterate over the generator
+        for _ in capture.sniff_continuously():
+            pass
     except KeyboardInterrupt:
         print("Capture interupted")
     finally:
