@@ -9,7 +9,7 @@
 import csv
 import argparse
 import pyshark # type: ignore (dumbass vscode cant figure out its already installed)
-import sys
+import re
 from datetime import datetime, timezone
 
 
@@ -229,53 +229,55 @@ def create_csv(packets, timestamp_file, output_file):
                 # get modbus data
                 modbus_data = ""
 
-                # get address and count values
-                tmp_val = getattr(modbus_layer, "reference_num", "")
+                # get address and count values (for reading/writing registers/relays)
+                tmp_val = getattr(modbus_layer, "reference_num", "")            # address
                 modbus_data += "" if tmp_val == "" else f'{int(tmp_val):04x}'
-                tmp_val = getattr(modbus_layer, "word_cnt", "")
+                tmp_val = getattr(modbus_layer, "word_cnt", "")                 # register count (2 bytes)
                 modbus_data += "" if tmp_val == "" else f'{int(tmp_val):04x}'
-                tmp_val = getattr(modbus_layer, "byte_cnt", "")
+                tmp_val = getattr(modbus_layer, "byte_cnt", "")                 # byte count for registers
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "bit_cnt", "")                  # bit count for relays
                 modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
 
                 # get single outputs
                 tmp_val = getattr(modbus_layer, "data", "").replace(":", "")
                 modbus_data += tmp_val # (already hex in this form)
 
-                # TODO: this is spagetti code !!!!!
-                # get multiple outputs
-                for field_name in modbus_layer.field_names:
-                    if field_name.startswith("register_"):
-                        register_name = field_name
-                        register_fields = getattr(modbus_layer, register_name)
+                # extract out any register values
+                reg_attrs = [attr for attr in dir(modbus_layer) if re.match(r'^register_\d+_', attr)]
+                reg_attrs_sorted = sorted(reg_attrs, key=lambda x: int(x.split('_')[1]))
+                regs = [int(getattr(modbus_layer, attr).regval_uint16) for attr in reg_attrs_sorted]
+                reg_hex_list = [f'{r & 0xFF:02x}' for r in regs]
+                reg_hex_str = ''.join(reg_hex_list)
+                modbus_data += reg_hex_str
 
-                        # get value (address is already included above)
-                        for data in register_fields.field_names:
-                            if data.startswith("regval"):
-                                modbus_value = getattr(register_fields, data)                        
-                        modbus_data += f'{int(modbus_value):04x}'
+                # extract out any bit values
+                bit_attrs = [attr for attr in dir(modbus_layer) if re.match(r'^bit_\d+_', attr)]
+                bit_attrs_sorted = sorted(bit_attrs, key=lambda x: int(x.split('_')[1]))
+                bits = [int(getattr(modbus_layer, attr).bitval) for attr in bit_attrs_sorted]
+                bitstring = ''.join(str(b) for b in bits)
 
-                    # add all data (don't care about structure anymore)
-                    tmp_val = getattr(modbus_layer, field_name)
-                    try:
-                        modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                    except:
-                        pass
-                
+                # pad so length is a multiple of 8 (a byte)
+                padding = (8 - len(bitstring) % 8) % 8
+                bitstring = bitstring + '0' * padding
+                bit_hex_str = ''.join(f'{int(bitstring[i:i+8], 2):02x}' for i in range(0, len(bitstring), 8))
+                modbus_data += bit_hex_str
+
                 # get device information output
-                #tmp_val = getattr(modbus_layer, "mei", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                #tmp_val = getattr(modbus_layer, "read_device_id", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                #tmp_val = getattr(modbus_layer, "object_id", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                #tmp_val = getattr(modbus_layer, "conformity_level", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
-                #tmp_val = getattr(modbus_layer, "more_follows", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
-                #tmp_val = getattr(modbus_layer, "next_object_id", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
-                #tmp_val = getattr(modbus_layer, "num_objects", "")
-                #modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "mei", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "read_device_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "object_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "conformity_level", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                tmp_val = getattr(modbus_layer, "more_follows", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val, 16):02x}'
+                tmp_val = getattr(modbus_layer, "next_object_id", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
+                tmp_val = getattr(modbus_layer, "num_objects", "")
+                modbus_data += "" if tmp_val == "" else f'{int(tmp_val):02x}'
 
                 modbus_data = f'0x{modbus_data}'
 
